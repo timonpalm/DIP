@@ -20,15 +20,16 @@ namespace dip2 {
  */
 cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<float>& kernel)
 {
-    std::cout << "src = " << std::endl << " "  << src << std::endl << std::endl;
+    //std::cout << "src = " << std::endl << " "  << src << std::endl << std::endl;
     cv::Mat_<float> conv_src;
-    cv::copyMakeBorder( src, conv_src, 1, 1, 1, 1, cv::BORDER_CONSTANT, 0);
-    cv::Mat_<float> output = src.clone();
-
-    //std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
 
     float kernel_size = kernel.rows; // assuming kernel is quadratic and odd numbered
     int kernel_midpoint = kernel_size / 2;
+    
+    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 0);
+    cv::Mat_<float> output = src.clone();
+
+    std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
 
     cv::Mat kernel_flip;
     cv::flip(kernel, kernel_flip, 0);
@@ -38,9 +39,9 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
 
     //std::cout << kernel.convertTo << std::endl;
 
-    for(int row=1; row<conv_src.rows-1; row++)
+    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint-1; row++)
     {
-        for(int col=1; col<conv_src.cols-1; col++)
+        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint-1; col++)
         {
             cv::Rect r(col-kernel_midpoint, row-kernel_midpoint, kernel_size, kernel_size);
             cv::Mat pixels = conv_src(r).clone();
@@ -54,7 +55,7 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
         }
     }
         
-    std::cout << "ouput = " << std::endl << " "  << output << std::endl << std::endl;
+    //std::cout << "ouput = " << std::endl << " "  << output << std::endl << std::endl;
 
     return output;
 }
