@@ -39,9 +39,9 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
 
     //std::cout << kernel.convertTo << std::endl;
 
-    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint-1; row++)
+    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint; row++)
     {
-        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint-1; col++)
+        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint; col++)
         {
             cv::Rect r(col-kernel_midpoint, row-kernel_midpoint, kernel_size, kernel_size);
             cv::Mat pixels = conv_src(r).clone();
@@ -85,28 +85,31 @@ cv::Mat_<float> averageFilter(const cv::Mat_<float>& src, int kSize)
 cv::Mat_<float> medianFilter(const cv::Mat_<float>& src, int kSize)
 {
     //std::cout << "src = " << std::endl << " "  << src << std::endl << std::endl;
+    int kernel_midpoint = kSize / 2;
 
     cv::Mat_<float> src_b;
-    cv::copyMakeBorder( src, src_b, 1, 1, 1, 1, cv::BORDER_CONSTANT, 0);
+    cv::copyMakeBorder( src, src_b, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 0);
     cv::Mat_<float> output = src.clone();
 
     //std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
 
     int median_idx = (kSize*kSize) / 2;
-    int kernel_midpoint = kSize / 2;
+    
 
-    for(int row=1; row<src_b.rows-1; row++)
+    for(int row=kernel_midpoint; row<src_b.rows-kernel_midpoint; row++)
     {
-        for(int col=1; col<src_b.cols-1; col++)
+        for(int col=kernel_midpoint; col<src_b.cols-kernel_midpoint; col++)
         {
             cv::Rect r(col-kernel_midpoint, row-kernel_midpoint, kSize, kSize);
             cv::Mat pixels = src_b(r).clone();
+            pixels = pixels.reshape(1,1);
             
             cv::sort(pixels, pixels, cv::SORT_EVERY_ROW);
+            //std::cout << "pixels = " << std::endl << " "  << pixels << std::endl << std::endl;
             
 
             float median = pixels.at<float>(0, median_idx);
-            output.at<float>(row-1, col-1) = median;
+            output.at<float>(row-kernel_midpoint, col-kernel_midpoint) = median;
             
         }
     }
@@ -134,9 +137,9 @@ cv::Mat_<float> bilateralFilter(const cv::Mat_<float>& src, int kSize, float sig
     cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 1);
     cv::Mat_<float> output = src.clone();
 
-    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint-1; row++)
+    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint; row++)
     {
-        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint-1; col++)
+        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint; col++)
         {
             cv::Rect r(col-kernel_midpoint, row-kernel_midpoint, kSize, kSize);
 
@@ -191,7 +194,18 @@ cv::Mat_<float> nlmFilter(const cv::Mat_<float>& src, int searchSize, double sig
  */
 NoiseReductionAlgorithm chooseBestAlgorithm(NoiseType noiseType)
 {
-    // TO DO !!
+    // Salt and Peppernois. Very large and small values as noise. Can be reduced by median filter
+    if (noiseType == NOISE_TYPE_1)
+    {
+        return NR_MEDIAN_FILTER;
+    }
+
+    // more gaussian noise
+    if (noiseType == NOISE_TYPE_2)
+    {
+        return NR_BILATERAL_FILTER;
+    }
+
     return (NoiseReductionAlgorithm) -1;
 }
 
@@ -207,27 +221,27 @@ cv::Mat_<float> denoiseImage(const cv::Mat_<float> &src, NoiseType noiseType, di
         case dip2::NR_MOVING_AVERAGE_FILTER:
             switch (noiseType) {
                 case NOISE_TYPE_1:
-                    return dip2::averageFilter(src, 1);
+                    return dip2::averageFilter(src, 7);
                 case NOISE_TYPE_2:
-                    return dip2::averageFilter(src, 1);
+                    return dip2::averageFilter(src, 3);
                 default:
                     throw std::runtime_error("Unhandled noise type!");
             }
         case dip2::NR_MEDIAN_FILTER:
             switch (noiseType) {
                 case NOISE_TYPE_1:
-                    return dip2::medianFilter(src, 1);
+                    return dip2::medianFilter(src, 5);
                 case NOISE_TYPE_2:
-                    return dip2::medianFilter(src, 1);
+                    return dip2::medianFilter(src, 11);
                 default:
                     throw std::runtime_error("Unhandled noise type!");
             }
         case dip2::NR_BILATERAL_FILTER:
             switch (noiseType) {
                 case NOISE_TYPE_1:
-                    return dip2::bilateralFilter(src, 1, 1.0f, 1.0f);
+                    return dip2::bilateralFilter(src, 11, 200.0f, 200.0f);
                 case NOISE_TYPE_2:
-                    return dip2::bilateralFilter(src, 1, 1.0f, 1.0f);
+                    return dip2::bilateralFilter(src, 11, 100.0f, 100.0f);
                 default:
                     throw std::runtime_error("Unhandled noise type!");
             }
