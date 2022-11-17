@@ -26,10 +26,10 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
     float kernel_size = kernel.rows; // assuming kernel is quadratic and odd numbered
     int kernel_midpoint = kernel_size / 2;
     
-    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 0);
+    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 1);
     cv::Mat_<float> output = src.clone();
 
-    std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
+    //std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
 
     cv::Mat kernel_flip;
     cv::flip(kernel, kernel_flip, 0);
@@ -50,7 +50,7 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
 
             float new_val = kernel_flat.dot(pixels);
             //std::cout << "o = " << std::endl << " "  << output << std::endl << std::endl;
-            output.at<float>(row-1, col-1) = new_val;
+            output.at<float>(row-kernel_midpoint, col-kernel_midpoint) = new_val;
             
         }
     }
@@ -71,7 +71,7 @@ cv::Mat_<float> averageFilter(const cv::Mat_<float>& src, int kSize)
 {
     float val = 1.0 / (kSize * kSize);
     cv::Mat kernel(cv::Size(kSize, kSize), CV_32FC1, cv::Scalar(val));
-    std::cout << "kernel = " << std::endl << " "  << kernel << std::endl << std::endl;
+    //std::cout << "kernel = " << std::endl << " "  << kernel << std::endl << std::endl;
     cv::Mat output = spatialConvolution(src, kernel);
     return output;
 }
@@ -126,8 +126,48 @@ cv::Mat_<float> medianFilter(const cv::Mat_<float>& src, int kSize)
  */
 cv::Mat_<float> bilateralFilter(const cv::Mat_<float>& src, int kSize, float sigma_spatial, float sigma_radiometric)
 {
-    // TO DO !!
-    return src.clone();
+
+    // tagret pixel is at 0,0 so we start at the upper left, e.g. -1,-1 depending on the kernel size
+    int kernel_midpoint = kSize / 2;
+
+    cv::Mat conv_src;
+    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 1);
+    cv::Mat_<float> output = src.clone();
+
+    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint-1; row++)
+    {
+        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint-1; col++)
+        {
+            cv::Rect r(col-kernel_midpoint, row-kernel_midpoint, kSize, kSize);
+
+            float val_midpoint = conv_src.at<float>(row, col);
+
+            float w_sum = 0;
+            float val_sum = 0;
+            for(int x=-kernel_midpoint; x<=kernel_midpoint; x++)
+            {
+                for(int y=-kernel_midpoint; y<=kernel_midpoint; y++)
+                {
+                    float h_spat = (1 / (2 * M_PI * pow(sigma_spatial, 2))) * exp( (- (pow(x, 2) + pow(y, 2)))/ (2 * pow(sigma_spatial, 2)));
+
+                    float kernel_val = conv_src.at<float>(row+x, col+y);
+
+                    float h_radio = (1 / (2 * M_PI * pow(sigma_radiometric, 2))) * exp( -pow(kernel_val - val_midpoint, 2)/ (2 * pow(sigma_radiometric, 2)));
+
+                    float w = h_spat * h_radio;
+                    float val = w * kernel_val;
+
+                    w_sum += w;
+                    val_sum += val;
+                    
+                }
+            }
+
+            output.at<float>(row-kernel_midpoint, col-kernel_midpoint) = val_sum / w_sum;
+            
+        }
+    }
+    return output;
 }
 
 /**
