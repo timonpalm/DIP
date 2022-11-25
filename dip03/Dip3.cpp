@@ -128,20 +128,21 @@ cv::Mat_<float> frequencyConvolution(const cv::Mat_<float>& in, const cv::Mat_<f
 
    cv::Mat_<float> out_dft;
 
+   std::cout << "osize = " << std::endl << " "  << (cv::getOptimalDFTSize(in.rows) - kernel.rows) << std::endl << std::endl;
    int row_in_diff = cv::getOptimalDFTSize(in.rows) - in.rows;
    int col_in_diff = cv::getOptimalDFTSize(in.cols) - in.cols;
 
-   int row_kernel_diff = (int) (cv::getOptimalDFTSize(in.rows) - kernel.rows) / 2;
-   int col_kernel_diff = (int) (cv::getOptimalDFTSize(in.cols) - kernel.cols) / 2;
+   int row_kernel_diff = cv::getOptimalDFTSize(in.rows) - kernel.rows;
+   int col_kernel_diff = cv::getOptimalDFTSize(in.cols) - kernel.cols;
 
    cv::Mat_<float> kernel_expanded;
 
    cv::copyMakeBorder(in, in_dft, 0, row_in_diff, 0, col_in_diff, cv::BORDER_CONSTANT, 0);
-   cv::copyMakeBorder(kernel, kernel_expanded, row_kernel_diff, row_kernel_diff, col_kernel_diff, col_kernel_diff, cv::BORDER_CONSTANT, 0);
+   cv::copyMakeBorder(kernel, kernel_expanded, 0, row_kernel_diff, 0, col_kernel_diff, cv::BORDER_CONSTANT, 0);
 
    dft(in_dft, in_dft, 0);
    
-   cv::Mat_<float> kernel_shifted = circShift(kernel_expanded, int(-kernel_expanded.rows/2), int(-kernel_expanded.cols/2));
+   cv::Mat_<float> kernel_shifted = circShift(kernel_expanded, int(-kernel.rows/2), int(-kernel.cols/2));
    dft(kernel_shifted, kernel_dft, 0);
    
    mulSpectrums(in_dft, kernel_dft, out_dft, 0);
@@ -167,11 +168,17 @@ cv::Mat_<float> frequencyConvolution(const cv::Mat_<float>& in, const cv::Mat_<f
  */
 cv::Mat_<float> usm(const cv::Mat_<float>& in, FilterMode filterMode, int size, float thresh, float scale)
 {
-   // TO DO !!!
+   cv::Mat_<float> img_smooth = smoothImage(in, size, filterMode);
 
-   // use smoothImage(...) for smoothing
+   cv::Mat_<float> diff = in - img_smooth;
 
-   return in;
+   threshold(diff, diff, thresh, scale, cv::THRESH_TOZERO);
+
+   diff *= scale;
+
+   diff += in;
+
+   return diff;
 }
 
 
