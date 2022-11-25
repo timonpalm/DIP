@@ -187,10 +187,12 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
    //std::cout << "src = " << std::endl << " "  << src << std::endl << std::endl;
     cv::Mat_<float> conv_src;
 
-    float kernel_size = kernel.rows; // assuming kernel is quadratic and odd numbered
-    int kernel_midpoint = kernel_size / 2;
+    int kernel_mid_row = kernel.rows / 2;
+    int kernel_mid_col = kernel.cols / 2;
+
+    //std::cout << "kernel = " << std::endl << " "  << kernel << std::endl << std::endl;
     
-    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 1);
+    cv::copyMakeBorder( src, conv_src, kernel_mid_row, kernel_mid_row, kernel_mid_col, kernel_mid_col, cv::BORDER_CONSTANT, 1);
     cv::Mat_<float> output = src.clone();
 
     //std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
@@ -203,18 +205,18 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
 
     //std::cout << kernel.convertTo << std::endl;
 
-    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint; row++)
+    for(int row=kernel_mid_row; row<conv_src.rows-kernel_mid_row; row++)
     {
-        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint; col++)
+        for(int col=kernel_mid_col; col<conv_src.cols-kernel_mid_col; col++)
         {
-            cv::Rect r(col-kernel_midpoint, row-kernel_midpoint, kernel_size, kernel_size);
+            cv::Rect r(col-kernel_mid_col, row-kernel_mid_row, kernel.cols, kernel.rows);
             cv::Mat pixels = conv_src(r).clone();
             //std::cout << "pixels = " << std::endl << " "  << pixels << std::endl << std::endl;
             pixels = pixels.reshape(1,1);
 
             float new_val = kernel_flat.dot(pixels);
             //std::cout << "o = " << std::endl << " "  << output << std::endl << std::endl;
-            output.at<float>(row-kernel_midpoint, col-kernel_midpoint) = new_val;
+            output.at<float>(row-kernel_mid_row, col-kernel_mid_col) = new_val;
             
         }
     }
@@ -234,9 +236,12 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
  */
 cv::Mat_<float> separableFilter(const cv::Mat_<float>& src, const cv::Mat_<float>& kernel){
 
-   // TO DO !!!
+   cv::Mat_<float> tmp = spatialConvolution(src, kernel);
+   transpose(tmp, tmp);
+   cv::Mat_<float> out = spatialConvolution(tmp, kernel);
 
-   return src;
+   transpose(out, out);
+   return out;
 
 }
 
