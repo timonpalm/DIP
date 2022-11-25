@@ -53,9 +53,24 @@ cv::Mat_<float> createGaussianKernel1D(int kSize){
  */
 cv::Mat_<float> createGaussianKernel2D(int kSize){
 
-    // TO DO !!!
+    float varience = kSize / 5.0;
+
+    cv::Mat_<float> kernel = cv::Mat_<float>::zeros(kSize, kSize);
+
+    int midpoint = int(kSize / 2);
+
+    float sum = 0;
+    for(int i=-midpoint; i<=midpoint; i++){
+      for(int k=-midpoint; k<=midpoint; k++){
+         float val = (1 / (2 * M_PI * varience * varience)) * exp(-0.5 * (((i*i) + (k*k))/ (varience*varience)));
+         kernel.at<float>(midpoint + k,midpoint + i) = val;
+         sum += val;
+      }
+    }
    
-    return cv::Mat_<float>::zeros(kSize, kSize);
+    kernel = kernel / sum;
+   
+    return kernel;
 }
 
 /**
@@ -67,9 +82,36 @@ cv::Mat_<float> createGaussianKernel2D(int kSize){
  */
 cv::Mat_<float> circShift(const cv::Mat_<float>& in, int dx, int dy){
 
-   // TO DO !!!
+   cv::Mat_<float> out = in.clone();
+   //std::cout << "dx = " << dx << std::endl;
+   //std::cout << "dy = " << dy << std::endl;
 
-   return in;
+   //cv::copyMakeBorder( in, out, abs(dy), abs(dy), abs(dx), abs(dx), cv::BORDER_CONSTANT, 1);
+
+   for(int row=0; row<out.rows; row++){
+      for(int col=0; col<out.cols; col++){
+         int new_x = col + dx;
+         int new_y = row + dy;
+
+         if(new_x < 0){
+            new_x = out.rows + new_x;
+         }
+         else if(new_x >= out.rows){
+            new_x = new_x - out.rows;
+         }
+         if(new_y < 0){
+            new_y = out.cols + new_y;
+         }
+         else if(new_y >= out.cols){
+            new_y = new_y - out.cols;
+         }
+
+         out.at<float>(new_y, new_x) = in.at<float>(row, col);
+         //std::cout << "out = " << std::endl << " "  << out << std::endl << std::endl;
+      }
+   }
+
+   return out;
 }
 
 
@@ -81,9 +123,36 @@ cv::Mat_<float> circShift(const cv::Mat_<float>& in, int dx, int dy){
  */
 cv::Mat_<float> frequencyConvolution(const cv::Mat_<float>& in, const cv::Mat_<float>& kernel){
 
-   // TO DO !!!
+   cv::Mat_<float> in_dft;
+   cv::Mat_<float> kernel_dft;
 
-   return in;
+   cv::Mat_<float> out_dft;
+
+   int row_in_diff = cv::getOptimalDFTSize(in.rows) - in.rows;
+   int col_in_diff = cv::getOptimalDFTSize(in.cols) - in.cols;
+
+   int row_kernel_diff = (int) (cv::getOptimalDFTSize(in.rows) - kernel.rows) / 2;
+   int col_kernel_diff = (int) (cv::getOptimalDFTSize(in.cols) - kernel.cols) / 2;
+
+   cv::Mat_<float> kernel_expanded;
+
+   cv::copyMakeBorder(in, in_dft, 0, row_in_diff, 0, col_in_diff, cv::BORDER_CONSTANT, 0);
+   cv::copyMakeBorder(kernel, kernel_expanded, row_kernel_diff, row_kernel_diff, col_kernel_diff, col_kernel_diff, cv::BORDER_CONSTANT, 0);
+
+   dft(in_dft, in_dft, 0);
+   
+   cv::Mat_<float> kernel_shifted = circShift(kernel_expanded, int(-kernel_expanded.rows/2), int(-kernel_expanded.cols/2));
+   dft(kernel_shifted, kernel_dft, 0);
+   
+   mulSpectrums(in_dft, kernel_dft, out_dft, 0);
+
+   cv::Mat_<float> out;
+
+   dft( out_dft, out, cv::DFT_INVERSE + cv::DFT_SCALE);
+
+   //std::cout << "out = " << std::endl << " "  << out << std::endl << std::endl;
+
+   return out;
 }
 
 
