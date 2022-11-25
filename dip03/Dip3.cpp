@@ -184,9 +184,45 @@ cv::Mat_<float> usm(const cv::Mat_<float>& in, FilterMode filterMode, int size, 
 cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<float>& kernel)
 {
 
-   // Hopefully already DONE, copy from last homework
+   //std::cout << "src = " << std::endl << " "  << src << std::endl << std::endl;
+    cv::Mat_<float> conv_src;
 
-   return src;
+    float kernel_size = kernel.rows; // assuming kernel is quadratic and odd numbered
+    int kernel_midpoint = kernel_size / 2;
+    
+    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 1);
+    cv::Mat_<float> output = src.clone();
+
+    //std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
+
+    cv::Mat kernel_flip;
+    cv::flip(kernel, kernel_flip, 0);
+    cv::Mat kernel_flat = kernel_flip.reshape(1,1); // flatten kernel to 1d vector
+    //std::cout << "kernel = " << std::endl << " "  << kernel << std::endl << std::endl;
+    //std::cout << "kernel_flip = " << std::endl << " "  << kernel_flip << std::endl << std::endl;
+
+    //std::cout << kernel.convertTo << std::endl;
+
+    for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint; row++)
+    {
+        for(int col=kernel_midpoint; col<conv_src.cols-kernel_midpoint; col++)
+        {
+            cv::Rect r(col-kernel_midpoint, row-kernel_midpoint, kernel_size, kernel_size);
+            cv::Mat pixels = conv_src(r).clone();
+            //std::cout << "pixels = " << std::endl << " "  << pixels << std::endl << std::endl;
+            pixels = pixels.reshape(1,1);
+
+            float new_val = kernel_flat.dot(pixels);
+            //std::cout << "o = " << std::endl << " "  << output << std::endl << std::endl;
+            output.at<float>(row-kernel_midpoint, col-kernel_midpoint) = new_val;
+            
+        }
+    }
+        
+    //std::cout << "ouput = " << std::endl << " "  << output << std::endl << std::endl;
+
+    return output;
+
 }
 
 
