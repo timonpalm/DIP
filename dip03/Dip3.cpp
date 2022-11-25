@@ -28,9 +28,22 @@ const char * const filterModeNames[NUM_FILTER_MODES] = {
  */
 cv::Mat_<float> createGaussianKernel1D(int kSize){
 
-    // TO DO !!!
+    float varience = kSize / 5.0;
+
+    cv::Mat_<float> kernel = cv::Mat_<float>::zeros(1, kSize);
+
+    int midpoint = int(kSize / 2);
+
+    float sum = 0;
+    for(int i=-midpoint; i<=midpoint; i++){
+      float val = (1 / (2 * M_PI * varience)) * exp(-0.5 * ((i*i) / (varience*varience)));
+      kernel.at<float>(0,midpoint + i) = val;
+      sum += val;
+    }
    
-    return cv::Mat_<float>::zeros(1, kSize);
+    kernel = kernel / sum;
+   
+    return kernel;
 }
 
 /**
