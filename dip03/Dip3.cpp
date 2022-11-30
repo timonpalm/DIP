@@ -128,7 +128,7 @@ cv::Mat_<float> frequencyConvolution(const cv::Mat_<float>& in, const cv::Mat_<f
 
    cv::Mat_<float> out_dft;
 
-   std::cout << "osize = " << std::endl << " "  << (cv::getOptimalDFTSize(in.rows) - kernel.rows) << std::endl << std::endl;
+   //std::cout << "osize = " << std::endl << " "  << (cv::getOptimalDFTSize(in.rows) - kernel.rows) << std::endl << std::endl;
    int row_in_diff = cv::getOptimalDFTSize(in.rows) - in.rows;
    int col_in_diff = cv::getOptimalDFTSize(in.cols) - in.cols;
 
@@ -213,7 +213,7 @@ cv::Mat_<float> spatialConvolution(const cv::Mat_<float>& src, const cv::Mat_<fl
 
     //std::cout << "kernel = " << std::endl << " "  << kernel << std::endl << std::endl;
     
-    cv::copyMakeBorder( src, conv_src, kernel_mid_row, kernel_mid_row, kernel_mid_col, kernel_mid_col, cv::BORDER_CONSTANT, 1);
+    cv::copyMakeBorder( src, conv_src, kernel_mid_row, kernel_mid_row, kernel_mid_col, kernel_mid_col, cv::BORDER_REPLICATE);
     cv::Mat_<float> output = src.clone();
 
     //std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
