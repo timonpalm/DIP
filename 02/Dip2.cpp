@@ -88,7 +88,7 @@ cv::Mat_<float> medianFilter(const cv::Mat_<float>& src, int kSize)
     int kernel_midpoint = kSize / 2;
 
     cv::Mat_<float> src_b;
-    cv::copyMakeBorder( src, src_b, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 0);
+    cv::copyMakeBorder( src, src_b, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_REPLICATE);
     cv::Mat_<float> output = src.clone();
 
     //std::cout << "conv_src = " << std::endl << " "  << conv_src << std::endl << std::endl;
@@ -134,7 +134,7 @@ cv::Mat_<float> bilateralFilter(const cv::Mat_<float>& src, int kSize, float sig
     int kernel_midpoint = kSize / 2;
 
     cv::Mat conv_src;
-    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_CONSTANT, 1);
+    cv::copyMakeBorder( src, conv_src, kernel_midpoint, kernel_midpoint, kernel_midpoint, kernel_midpoint, cv::BORDER_REPLICATE);
     cv::Mat_<float> output = src.clone();
 
     for(int row=kernel_midpoint; row<conv_src.rows-kernel_midpoint; row++)
@@ -232,7 +232,7 @@ cv::Mat_<float> denoiseImage(const cv::Mat_<float> &src, NoiseType noiseType, di
                 case NOISE_TYPE_1:
                     return dip2::medianFilter(src, 5);
                 case NOISE_TYPE_2:
-                    return dip2::medianFilter(src, 11);
+                    return dip2::medianFilter(src,5);
                 default:
                     throw std::runtime_error("Unhandled noise type!");
             }
@@ -241,7 +241,7 @@ cv::Mat_<float> denoiseImage(const cv::Mat_<float> &src, NoiseType noiseType, di
                 case NOISE_TYPE_1:
                     return dip2::bilateralFilter(src, 11, 200.0f, 200.0f);
                 case NOISE_TYPE_2:
-                    return dip2::bilateralFilter(src, 11, 100.0f, 100.0f);
+                    return dip2::bilateralFilter(src, 11, 200.0f, 100.0f);
                 default:
                     throw std::runtime_error("Unhandled noise type!");
             }
