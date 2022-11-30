@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
     test_averageFilter();
     test_medianFilter();
     test_bilateralFilter();
-    //test_denoiseImage();
+    test_denoiseImage();
 
 	return 0;
 } 

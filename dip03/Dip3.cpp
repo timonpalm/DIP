@@ -16,7 +16,7 @@ const char * const filterModeNames[NUM_FILTER_MODES] = {
     "FM_SPATIAL_CONVOLUTION",
     "FM_FREQUENCY_CONVOLUTION",
     "FM_SEPERABLE_FILTER",
-    "FM_INTEGRAL_IMAGE",
+    //"FM_INTEGRAL_IMAGE",
 };
 
 
@@ -170,13 +170,27 @@ cv::Mat_<float> usm(const cv::Mat_<float>& in, FilterMode filterMode, int size, 
 {
    cv::Mat_<float> img_smooth = smoothImage(in, size, filterMode);
 
-   cv::Mat_<float> diff = in - img_smooth;
+   cv::Mat_<float> diff;
+   std::cout << "in = " << std::endl << " "  << in.at<float>(0,0) << std::endl << std::endl;
+   std::cout << "smooth = " << std::endl << " "  << img_smooth.at<float>(0,0) << std::endl << std::endl;
+   subtract(in, img_smooth, diff);
+   std::cout << "diff = " << std::endl << " "  << diff.at<float>(0,0) << std::endl << std::endl;
 
-   threshold(diff, diff, thresh, scale, cv::THRESH_TOZERO);
+   cv::Mat_<float> diff_greater;
+   cv::Mat_<float> diff_smaller;
+   threshold(diff, diff_greater, thresh, scale, cv::THRESH_TOZERO);
+   threshold(diff, diff_smaller, -thresh, scale, cv::THRESH_TOZERO_INV);
+   diff = diff_greater + diff_smaller;
+   std::cout << "diff = " << std::endl << " "  << diff.at<float>(0,0) << std::endl << std::endl;
+   //std::cout << "diff = " << std::endl << " "  << diff << std::endl << std::endl;
 
-   diff *= scale;
+   diff = diff * scale;
+   std::cout << "diff = " << std::endl << " "  << diff.at<float>(0,0) << std::endl << std::endl;
+   //std::cout << "diff = " << std::endl << " "  << diff << std::endl << std::endl;
 
-   diff += in;
+   diff = diff + in;
+   std::cout << "diff = " << std::endl << " "  << diff.at<float>(0,0) << std::endl << std::endl;
+   //std::cout << "diff = " << std::endl << " "  << diff << std::endl << std::endl;
 
    return diff;
 }
@@ -284,7 +298,7 @@ cv::Mat_<float> smoothImage(const cv::Mat_<float>& in, int size, FilterMode filt
         case FM_SPATIAL_CONVOLUTION: return spatialConvolution(in, createGaussianKernel2D(size));	// 2D spatial convolution
         case FM_FREQUENCY_CONVOLUTION: return frequencyConvolution(in, createGaussianKernel2D(size));	// 2D convolution via multiplication in frequency domain
         case FM_SEPERABLE_FILTER: return separableFilter(in, createGaussianKernel1D(size));	// seperable filter
-        case FM_INTEGRAL_IMAGE: return satFilter(in, size);		// integral image
+        //case FM_INTEGRAL_IMAGE: return satFilter(in, size);		// integral image
         default: 
             throw std::runtime_error("Unhandled filter type!");
     }
