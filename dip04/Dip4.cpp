@@ -238,12 +238,6 @@ cv::Mat_<std::complex<float>> applyFilter(const cv::Mat_<std::complex<float>>& i
  */
 cv::Mat_<float> inverseFilter(const cv::Mat_<float>& degraded, const cv::Mat_<float>& filter, const float eps)
 {
-    float height_d = degraded.rows;
-    float width_d = degraded.cols;
-
-    float height_f = filter.rows;
-    float width_f = filter.cols;
-
     int row_filter_diff = degraded.rows - filter.rows;
     int col_filter_diff = degraded.cols - filter.cols;
 
@@ -259,7 +253,7 @@ cv::Mat_<float> inverseFilter(const cv::Mat_<float>& degraded, const cv::Mat_<fl
 
     cv::Mat_<std::complex<float>> dft_restored = applyFilter(dft_degraded, dft_filter);
 
-    cv::Mat_<float> restored = IDFTComplex2Real(dft_degraded);
+    cv::Mat_<float> restored = IDFTComplex2Real(dft_restored);
 
     return restored;
 }
@@ -273,8 +267,24 @@ cv::Mat_<float> inverseFilter(const cv::Mat_<float>& degraded, const cv::Mat_<fl
  */
 cv::Mat_<std::complex<float>> computeWienerFilter(const cv::Mat_<std::complex<float>>& input, const float snr)
 {
-    // TO DO !!!
-    return input;
+    float height = input.rows;
+    float width = input.cols;
+
+    cv::Mat_<std::complex<float>> out = cv::Mat_<std::complex<float>>(height, width);
+
+    for (int r=0; r<height; r++){
+        for (int c=0; c<width; c++){
+            std::complex<float> val = input.at<std::complex<float>>(r, c);
+            std::complex<float> val_conj = std::conj(val);
+            
+            std::complex<float> denumerator = std::norm(val) + (1/snr);
+
+            std::complex<float> out_val = val_conj / denumerator;
+            out.at<std::complex<float>>(r,c) = out_val;    
+        }
+    }
+    std::cout << "out = " << std::endl << " "  << out << std::endl << std::endl;
+    return out;
 }
 
 /**
@@ -286,8 +296,24 @@ cv::Mat_<std::complex<float>> computeWienerFilter(const cv::Mat_<std::complex<fl
  */
 cv::Mat_<float> wienerFilter(const cv::Mat_<float>& degraded, const cv::Mat_<float>& filter, float snr)
 {
-    // TO DO !!!
-    return degraded;
+    int row_filter_diff = degraded.rows - filter.rows;
+    int col_filter_diff = degraded.cols - filter.cols;
+
+    cv::Mat_<float> filter_expanded;
+
+    cv::copyMakeBorder(filter, filter_expanded, 0, row_filter_diff, 0, col_filter_diff, cv::BORDER_CONSTANT, 0);
+    filter_expanded = circShift(filter_expanded, int(-filter.rows/2), int(-filter.cols/2));
+
+    cv::Mat_<std::complex<float>> dft_degraded = DFTReal2Complex(degraded);
+    cv::Mat_<std::complex<float>> dft_filter = DFTReal2Complex(filter_expanded);
+
+    dft_filter = computeWienerFilter(dft_filter, snr);
+
+    cv::Mat_<std::complex<float>> dft_restored = applyFilter(dft_degraded, dft_filter);
+
+    cv::Mat_<float> restored = IDFTComplex2Real(dft_restored);
+
+    return restored;
 }
 
 /* *****************************

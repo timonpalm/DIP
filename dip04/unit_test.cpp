@@ -507,8 +507,8 @@ int main(int argc, char** argv) {
     //ok &= test_circShift();
     //ok &= test_applyFilter();
     //ok &= test_computeInverseFilter();
-    ok &= test_inverseFilter();
-    //ok &= test_computeWienerFilter();
+    //ok &= test_inverseFilter();
+    ok &= test_computeWienerFilter();
     //ok &= test_wienerFilter();
     
     if (!ok) {
