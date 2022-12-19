@@ -34,8 +34,10 @@ bool matrixIsFinite(const Mat_<float> &mat) {
     
     for (unsigned r = 0; r < mat.rows; r++)
         for (unsigned c = 0; c < mat.cols; c++)
-            if (!fastmathIsFinite(mat(r, c)))
+            if (!fastmathIsFinite(mat(r, c))){
+                std::cout << "r, c = " << r << "" << c << std::endl;
                 return false;
+            }
     
     return true;
 }
@@ -44,10 +46,14 @@ bool matrixIsFinite(const Mat_<std::complex<float>> &mat) {
     
     for (unsigned r = 0; r < mat.rows; r++)
         for (unsigned c = 0; c < mat.cols; c++) {
-            if (!fastmathIsFinite(mat(r, c).real()))
+            if (!fastmathIsFinite(mat(r, c).real())){
+                std::cout << "r, c = " << r << " " << c << std::endl;
                 return false;
-            if (!fastmathIsFinite(mat(r, c).imag()))
+            }
+            if (!fastmathIsFinite(mat(r, c).imag())){
+                std::cout << "r, c = " << r << " " << c << std::endl;
                 return false;
+            }
         }
     
     return true;
@@ -422,6 +428,7 @@ bool test_computeWienerFilter()
                 for (unsigned c = 0; c < in.cols; c++) {
                     auto v = in(r, c) * out(r, c);
                     if (std::abs(v - std::complex<float>(1.0f, 0.0f)) > 0.01f) {
+                        std::cout << "r, c = " << r << " " << c << std::endl;
                         cout << "ERROR: Dip4::computeWienerFilter(): Result seems to be wrong for very high SNRs" << endl;
                         cout << "     expected in each cell " << std::complex<float>(1.0f, 0.0f) << " but got " << v << endl;
                         return false;
@@ -502,14 +509,14 @@ bool test_wienerFilter()
 int main(int argc, char** argv) {
     bool ok = true;
     
-    //ok &= test_DFTReal2Complex();
-    //ok &= test_IDFTComplex2Real();
-    //ok &= test_circShift();
-    //ok &= test_applyFilter();
-    //ok &= test_computeInverseFilter();
-    //ok &= test_inverseFilter();
+    ok &= test_DFTReal2Complex();
+    ok &= test_IDFTComplex2Real();
+    ok &= test_circShift();
+    ok &= test_applyFilter();
+    ok &= test_computeInverseFilter();
+    ok &= test_inverseFilter();
     ok &= test_computeWienerFilter();
-    //ok &= test_wienerFilter();
+    ok &= test_wienerFilter();
     
     if (!ok) {
         cout << "There are still errors!" << endl;
